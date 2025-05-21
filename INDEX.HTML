@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>My First WebAR</title>
+    <!-- Three.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.150.1/build/three.min.js"></script>
+    <!-- AR.js library -->
+    <script src="https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/three.js/build/ar-threex.js"></script>
+    <style>
+      body { margin: 0; overflow: hidden; }
+      canvas { position: absolute; top: 0; left: 0; }
+    </style>
+  </head>
+  <body>
+    <script>
+      // Create the scene and camera
+      const scene = new THREE.Scene();
+      const camera = new THREE.Camera();
+      scene.add(camera);
+
+      // Renderer setup
+      const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      document.body.appendChild(renderer.domElement);
+
+      // AR source from webcam
+      const arSource = new THREEx.ArToolkitSource({ sourceType: 'webcam' });
+      arSource.init(() => {
+        arSource.onResize();
+        arSource.copySizeTo(renderer.domElement);
+      });
+
+      // AR context setup
+      const arContext = new THREEx.ArToolkitContext({
+        cameraParametersUrl: 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/three.js/data/camera_para.dat',
+        detectionMode: 'mono'
+      });
+
+      arContext.init(() => {
+        camera.projectionMatrix.copy(arContext.getProjectionMatrix());
+      });
+
+      // Marker setup
+      const markerRoot = new THREE.Group();
+      scene.add(markerRoot);
+
+      const markerControls = new THREEx.ArMarkerControls(arContext, markerRoot, {
+        type: 'pattern',
+        patternUrl: 'https://cdn.jsdelivr.net/gh/AR-js-org/AR.js/three.js/data/patt.hiro'
+      });
+
+      // Add a 3D cube
+      const cube = new THREE.Mesh(
+        new THREE.BoxGeometry(1, 1, 1),
+        new THREE.MeshNormalMaterial()
+      );
+      cube.position.y = 0.5;
+      markerRoot.add(cube);
+
+      // Animation loop
+      function animate() {
+        requestAnimationFrame(animate);
+        if (arSource.ready) {
+          arContext.update(arSource.domElement);
+        }
+        renderer.render(scene, camera);
+      }
+
+      animate();
+    </script>
+  </body>
+</html>
